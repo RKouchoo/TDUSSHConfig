@@ -22,34 +22,15 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
-public class Main {
+public class SSHConnection {
 
 	static JSch javaSSH;
 	static Session session;
 	
 	static JSONObject json;
-	
-	private JFrame frame;
-
-	private JFrame frmRobotconfigEditor;
-	private JTextField DataEntryTextBox;
-	private JTextField statusReadoutTextBox;
-
-	
-	public static void main(String[] args) {
-		try {
 		
-			EventQueue.invokeLater(new Runnable() {
-				public void run() {
-					try {
-						Main main = new Main();
-						main.frame.setVisible(true);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			});
-			
+	public static void sshConnection(String[] args) {
+		try {
 			/**
 			 * Set up classes and connection properties.
 			 */
@@ -60,7 +41,6 @@ public class Main {
 			session.connect();
 			
 			ChannelSftp sftpConnection = (ChannelSftp) session.openChannel("sftp");
-			
 			sftpConnection.connect();
 			
 			
@@ -107,7 +87,7 @@ public class Main {
 		
 	}
 	
-	public Main() {
+	public SSHConnection() {
 	}
 
 }
