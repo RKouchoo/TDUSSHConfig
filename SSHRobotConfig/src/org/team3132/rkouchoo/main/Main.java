@@ -4,8 +4,10 @@ import javax.swing.JFrame;
 import java.awt.List;
 import javax.swing.JTextField;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -48,6 +50,18 @@ public class Main {
 	static InputStream blobIn;
 	static JSONObject json;
 
+	
+	private enum dataType {
+		STRING,
+		BOOLEAN,
+		LONG,
+		DOUBLE,
+		JSONArray,
+		INVALID
+	}
+
+	private dataType jObjectType;
+	
 	/**
 	 * Launch the application.
 	 */
@@ -68,7 +82,7 @@ public class Main {
 			session.setConfig("StrictHostKeyChecking", "no");
 		} catch (JSchException e) {
 			statusReadoutTextBox.setText("[ERR]: Failed to initiate SSH library");
-			e.printStackTrace(); // send exception to the console, will be a st													range error if this fails
+			e.printStackTrace(); // send exception to the console, will be a strange error if this fails
 		}
 		handleButtons();
 	}
@@ -110,7 +124,7 @@ public class Main {
 		btnConnect.setBounds(391, 609, 149, 62);
 		btnDisconnect.setBounds(552, 609, 149, 62);
 		lblDataEntry.setBounds(401, 27, 85, 15);
-		lblLocalStatus.setBounds(391, 513, 200, 15);
+		lblLocalStatus.setBounds(391, 513, 400, 15);
 		lblAuthor.setBounds(12, 696, 322, 15);
 		statusReadoutTextBox.setBounds(391, 533, 310, 56);
 
@@ -140,9 +154,39 @@ public class Main {
 					return;
 				}
 
-				statusReadoutTextBox.setText(String.format("[WARN]: Put: %s in key: %s", dataEntryTextBox.getText(),
-						jKeyList.getSelectedItem()));
-				json.put(jKeyList.getSelectedItem(), dataEntryTextBox.getText());
+				statusReadoutTextBox.setText(String.format("[WARN]: Put: %s in key: %s", dataEntryTextBox.getText(), jKeyList.getSelectedItem()));
+				
+				switch (jObjectType) {
+				case BOOLEAN:
+					json.replace(jKeyList.getSelectedItem(), Boolean.valueOf(dataEntryTextBox.getText()));
+					break;
+				case DOUBLE:
+					json.put(jKeyList.getSelectedItem(), Double.valueOf(dataEntryTextBox.getText()));
+					break;
+				case INVALID:
+					statusReadoutTextBox.setText("[ERR]: Invalid datatype!");
+					System.err.println("Invalid data type");
+					break;
+				case JSONArray:
+					Object object = null;
+					JSONArray arrayObj = null;
+					JSONParser jsonParser = new JSONParser();
+					try {
+						object = jsonParser.parse(dataEntryTextBox.getText());
+					} catch (ParseException e1) {
+						e1.printStackTrace();
+					}
+					arrayObj = (JSONArray) object;					
+					json.put(jKeyList.getSelectedItem(), arrayObj);
+					break;
+				case LONG:
+					json.put(jKeyList.getSelectedItem(), Long.valueOf(dataEntryTextBox.getText()));
+					break;
+				case STRING:
+					json.put(jKeyList.getSelectedItem(), dataEntryTextBox.getText());
+					break;
+				}
+								
 				dataEntryTextBox.setText(null);
 			}
 		});
@@ -256,7 +300,7 @@ public class Main {
 																							// previous config.
 						sftpConnection.put(jsonStream, Constants.SSH_REMOTE_FILE + ".test"); // TODO: REMOVE .test WHEN
 																								// TESTED!
-						statusReadoutTextBox.setText("[WARN]: Sent file to robot. restart code for changes to apply.");
+						statusReadoutTextBox.setText("[WARN]: Sent file to robot. SUCCESS!!!!.");
 					} catch (Exception ex) {
 						statusReadoutTextBox.setText("[ERR]: Failed to create SFTP connection!.");
 						ex.printStackTrace(); // send to console
@@ -272,17 +316,29 @@ public class Main {
 		jKeyList.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				
-				// Check if the json has been initialized previously and contains data.
+				// Check if the json has been initialised previously and contains data.
 				if (json == null) {
 					statusReadoutTextBox.setText("[ERR]: No data in JSON file!");
 					return;
 				}
 				
-				Object object = json.get(jKeyList.getSelectedItem());
-				String data = (String) object;
+				statusReadoutTextBox.setText(String.format("Selected key: %s", jKeyList.getSelectedItem()));
+				Object testObject = json.get(jKeyList.getSelectedItem());
 				
-				dataEntryTextBox.setText(data);
+				if (testObject instanceof Boolean) {
+					jObjectType = dataType.BOOLEAN;
+				} else if (testObject instanceof Long) {
+					jObjectType = dataType.LONG;
+				} else if (testObject instanceof Double) {
+					jObjectType = dataType.DOUBLE;					
+				} else if (testObject instanceof JSONArray) {
+					jObjectType = dataType.JSONArray;
+				} else if (testObject instanceof String) {
+					jObjectType = dataType.STRING;
+				} else {
+					jObjectType = dataType.INVALID;
+				}
+				return;
 			}
 		});
 	}
