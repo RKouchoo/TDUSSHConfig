@@ -188,10 +188,12 @@ public class Main {
 					java.util.Iterator<String> keyIterator = keys.iterator();
 					java.util.List<String> keysList = new ArrayList<String>();
 
-					while (keyIterator.hasNext()) {
+					while (keyIterator.hasNext()) { // take the keys out of the iterator and put it in a list
 						keysList.add(keyIterator.next());
 					}
 
+					// TODO: these methods should be combined... meh 
+					
 					// Add the keys to the jlist
 					for (int i = 0; i < keysList.size(); i++) {
 						jKeyList.add(keysList.get(i));
