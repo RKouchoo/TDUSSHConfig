@@ -238,6 +238,7 @@ public class Main {
 
 					// TODO: these methods should be combined... meh 
 					
+					jKeyList.removeAll(); // remove all of the keys so they are not duplicated.
 					// Add the keys to the jlist
 					for (int i = 0; i < keysList.size(); i++) {
 						jKeyList.add(keysList.get(i));
@@ -262,8 +263,24 @@ public class Main {
 					statusReadoutTextBox.setText("[WARN]: Disconnected from robot.");
 					lblLocalStatus.setText("Connection Status: DISCONNECTED");
 				} else {
-					statusReadoutTextBox.setText("[WARN]: Not connected to robot, ignoring disconnect.");
+					statusReadoutTextBox.setText("[WARN]: Not connected to robot, ignoring.");
 				}
+				/*
+				 * Disable EVERYTHING!!!! 
+				 */
+				btnConnect.setEnabled(false);
+				btnDisconnect.setEnabled(false);
+				btnPushToRobot.setEnabled(false);
+				btnUpdate.setEnabled(false);
+				btnUpdate.setText("Restart tool!");
+				btnPushToRobot.setText("Restart tool!");
+				btnDisconnect.setText("Restart tool!");
+				btnConnect.setText("Restart tool!");
+				jKeyList.removeAll();
+				jKeyList.setEnabled(false);
+				jKeyList.add("Restart tool!");
+				dataEntryTextBox.setEnabled(false);
+				dataEntryTextBox.setText("Restart tool!");
 			}
 		});
 
@@ -323,6 +340,7 @@ public class Main {
 				}
 				
 				statusReadoutTextBox.setText(String.format("Selected key: %s", jKeyList.getSelectedItem()));
+				dataEntryTextBox.setText(json.get(jKeyList.getSelectedItem()).toString());
 				Object testObject = json.get(jKeyList.getSelectedItem());
 				
 				if (testObject instanceof Boolean) {
