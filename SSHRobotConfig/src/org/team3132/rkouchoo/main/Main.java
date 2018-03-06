@@ -44,14 +44,14 @@ public class Main {
 	private JLabel lblLocalStatus;
 	private JLabel lblAuthor;
 
-	static JSch javaSSH;
-	static Session session;
+	private static JSch javaSSH;
+	private static Session session;
 
-	static InputStream blobIn;
-	static JSONObject json;
+	private static InputStream blobIn;
+	private static JSONObject json;
 
 	
-	private enum dataType {
+	private static enum dataType {
 		STRING,
 		BOOLEAN,
 		LONG,
@@ -88,7 +88,7 @@ public class Main {
 	}
 
 	/**
-	 * Initialize the contents of the windo.
+	 * Initialise the contents of the window.
 	 */
 	@SuppressWarnings("deprecation")
 	private void initialiseWindow() {
