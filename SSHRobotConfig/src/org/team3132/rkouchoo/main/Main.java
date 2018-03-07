@@ -19,6 +19,8 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -44,6 +46,8 @@ public class Main {
 	private JLabel lblLocalStatus;
 	private JLabel lblAuthor;
 
+	private JCheckBox babyMode;
+	
 	private static JSch javaSSH;
 	private static Session session;
 
@@ -110,12 +114,16 @@ public class Main {
 		lblLocalStatus = new JLabel("Connection Status: DISCONNECTED");
 		lblAuthor = new JLabel("Author: @RKouchoo for Team3132. 2018");
 
+		babyMode = new JCheckBox("Baby mode (store in: RobotConfig.txt.test)");
+		babyMode.setSelected(true); // enable baby mode be default just in-case someone unknowingly makes a random change
+		
 		statusReadoutTextBox.setEditable(false);
 		statusReadoutTextBox.setColumns(100);
 
 		jKeyList.setMultipleSelections(false);
 		dataEntryTextBox.setColumns(10);
 
+		babyMode.setBounds(397, 210, 400, 15);
 		jKeyList.setBounds(12, 10, 345, 680);
 		dataEntryTextBox.setBounds(401, 50, 300, 76);
 		frmRobotconfigEditor.setBounds(100, 100, 740, 747);
@@ -128,6 +136,7 @@ public class Main {
 		lblAuthor.setBounds(12, 696, 322, 15);
 		statusReadoutTextBox.setBounds(391, 533, 310, 56);
 
+		frmRobotconfigEditor.getContentPane().add(babyMode);
 		frmRobotconfigEditor.getContentPane().add(btnUpdate);
 		frmRobotconfigEditor.getContentPane().add(btnConnect);
 		frmRobotconfigEditor.getContentPane().add(dataEntryTextBox);
@@ -148,13 +157,13 @@ public class Main {
 		btnUpdate.addActionListener(new ActionListener() {
 			@SuppressWarnings("unchecked")
 			public void actionPerformed(ActionEvent e) {
+				boolean keyNotPut = false;
+				
 				// Check if the json file actually contains data and keys are present.
 				if (json == null) {
 					statusReadoutTextBox.setText("[ERR]: Invalid JSON file! Connect to retrieve data!");
 					return;
 				}
-
-				statusReadoutTextBox.setText(String.format("[WARN]: Put: %s in key: %s", dataEntryTextBox.getText(), jKeyList.getSelectedItem()));
 				
 				switch (jObjectType) {
 				case BOOLEAN:
@@ -166,6 +175,7 @@ public class Main {
 				case INVALID:
 					statusReadoutTextBox.setText("[ERR]: Invalid datatype! not placing!");
 					System.err.println("Invalid data type. not placing itno json");
+					keyNotPut = true; // make sure the put key log is not printed out, instead this key should be placed.
 					break;
 				case JSONArray:
 					Object object = null;
@@ -173,8 +183,8 @@ public class Main {
 					JSONParser jsonParser = new JSONParser();
 					try {
 						object = jsonParser.parse(dataEntryTextBox.getText());
-					} catch (ParseException e1) {
-						e1.printStackTrace();
+					} catch (ParseException ex) {
+						ex.printStackTrace();
 					}
 					arrayObj = (JSONArray) object;					
 					json.put(jKeyList.getSelectedItem(), arrayObj);
@@ -187,6 +197,11 @@ public class Main {
 					break;
 				}
 								
+				// Only print out if the key was valid and actually placed into the json
+				if (!keyNotPut) {
+					statusReadoutTextBox.setText(String.format("[WARN]: Put: %s in key: %s", dataEntryTextBox.getText(), jKeyList.getSelectedItem()));
+				}
+				
 				dataEntryTextBox.setText(null);
 			}
 		});
@@ -210,6 +225,7 @@ public class Main {
 
 					// Grab the remote file.
 					blobIn = sftpConnection.get(Constants.SSH_REMOTE_FILE);
+					sftpConnection.put(blobIn, Constants.SSH_REMOTE_FILE + ".save"); // make a backup of the current file on connection.
 					statusReadoutTextBox.setText(String.format("[WARN]: Got file: %s", Constants.SSH_REMOTE_FILE));
 
 					/**
@@ -235,10 +251,9 @@ public class Main {
 					while (keyIterator.hasNext()) { // take the keys out of the iterator and put it in a list
 						keysList.add(keyIterator.next());
 					}
-
-					// TODO: these methods should be combined... meh 
 					
-					jKeyList.removeAll(); // remove all of the keys so they are not duplicated.
+					jKeyList.removeAll(); // remove all of the keys so they are not duplicated on reconnect
+				
 					// Add the keys to the jlist
 					for (int i = 0; i < keysList.size(); i++) {
 						jKeyList.add(keysList.get(i));
@@ -251,48 +266,40 @@ public class Main {
 
 				} catch (Exception ex) {
 					statusReadoutTextBox.setText("[ERR]: Failed to get a conneciton to the robot.");
-					ex.printStackTrace(); // Sent to the console not the text box
+					disableAll();
+					ex.printStackTrace(); // Sent to the console for further deubg 
 				}
 			}
 		});
 
 		btnDisconnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				boolean connection = false;
 				if (session.isConnected()) {
 					session.disconnect();
+					connection = true;
 					statusReadoutTextBox.setText("[WARN]: Disconnected from robot.");
 					lblLocalStatus.setText("Connection Status: DISCONNECTED");
 				} else {
 					statusReadoutTextBox.setText("[WARN]: Not connected to robot, ignoring.");
 				}
 				/*
-				 * Disable EVERYTHING!!!! 
+				 * Disable EVERYTHING if was last connected!!!! 
 				 */
-				btnConnect.setEnabled(false);
-				btnDisconnect.setEnabled(false);
-				btnPushToRobot.setEnabled(false);
-				btnUpdate.setEnabled(false);
-				btnUpdate.setText("Restart tool!");
-				btnPushToRobot.setText("Restart tool!");
-				btnDisconnect.setText("Restart tool!");
-				btnConnect.setText("Restart tool!");
-				jKeyList.removeAll();
-				jKeyList.setEnabled(false);
-				jKeyList.add("Restart tool!");
-				dataEntryTextBox.setEnabled(false);
-				dataEntryTextBox.setText("Restart tool!");
+				
+				if (connection) {
+					disableAll();
+				}		
 			}
 		});
 
 		btnPushToRobot.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
 				// Check if a SSH session exists, exit if it doesn't.
 				if (session == null) {
 					statusReadoutTextBox.setText("[ERR]: Not connected to robot!");
 					return;
 				}
-
 				// Check if the json has been initialized previously and contains data.
 				if (json == null) {
 					statusReadoutTextBox.setText("[ERR]: No data in JSON file!");
@@ -313,10 +320,11 @@ public class Main {
 					try {
 						ChannelSftp sftpConnection = (ChannelSftp) session.openChannel("sftp");
 						sftpConnection.connect();
-						sftpConnection.put(blobIn, Constants.SSH_REMOTE_FILE + ".save"); // Make a backup copy of the
-																							// previous config.
-						sftpConnection.put(jsonStream, Constants.SSH_REMOTE_FILE + ".test"); // TODO: REMOVE .test WHEN
-																								// TESTED!
+						if (babyMode.isSelected()) {
+							sftpConnection.put(jsonStream, Constants.SSH_REMOTE_FILE + ".test"); // TODO: REMOVE baby mode when comfortable		
+						} else {
+							sftpConnection.put(jsonStream, Constants.SSH_REMOTE_FILE); 		
+						}																		
 						statusReadoutTextBox.setText("[WARN]: Sent file to robot. SUCCESS!!!!.");
 					} catch (Exception ex) {
 						statusReadoutTextBox.setText("[ERR]: Failed to create SFTP connection!.");
@@ -338,20 +346,19 @@ public class Main {
 					statusReadoutTextBox.setText("[ERR]: No data in JSON file!");
 					return;
 				}
-				
 				statusReadoutTextBox.setText(String.format("Selected key: %s", jKeyList.getSelectedItem()));
 				dataEntryTextBox.setText(json.get(jKeyList.getSelectedItem()).toString());
-				Object testObject = json.get(jKeyList.getSelectedItem());
+				Object testObjectType = json.get(jKeyList.getSelectedItem());
 				
-				if (testObject instanceof Boolean) {
+				if (testObjectType instanceof Boolean) {
 					jObjectType = dataType.BOOLEAN;
-				} else if (testObject instanceof Long) {
+				} else if (testObjectType instanceof Long) {
 					jObjectType = dataType.LONG;
-				} else if (testObject instanceof Double) {
+				} else if (testObjectType instanceof Double) {
 					jObjectType = dataType.DOUBLE;					
-				} else if (testObject instanceof JSONArray) {
+				} else if (testObjectType instanceof JSONArray) {
 					jObjectType = dataType.JSONArray;
-				} else if (testObject instanceof String) {
+				} else if (testObjectType instanceof String) {
 					jObjectType = dataType.STRING;
 				} else {
 					jObjectType = dataType.INVALID;
@@ -359,5 +366,23 @@ public class Main {
 				return;
 			}
 		});
+	}
+	
+	private void disableAll() {
+		btnConnect.setEnabled(false);
+		btnDisconnect.setEnabled(false);
+		btnPushToRobot.setEnabled(false);
+		btnUpdate.setEnabled(false);
+		btnUpdate.setText("Restart tool!");
+		btnPushToRobot.setText("Restart tool!");
+		btnDisconnect.setText("Restart tool!");
+		btnConnect.setText("Restart tool!");
+		jKeyList.removeAll();
+		jKeyList.setEnabled(false);
+		jKeyList.add("Restart tool!");
+		dataEntryTextBox.setEnabled(false);
+		dataEntryTextBox.setText("Restart tool!");	
+		babyMode.setEnabled(false);
+		babyMode.setText("Restart tool!");
 	}
 }
