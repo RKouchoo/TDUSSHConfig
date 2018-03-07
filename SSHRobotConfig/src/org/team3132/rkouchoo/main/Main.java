@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Set;
 import java.awt.event.ActionEvent;
 import javax.swing.JLabel;
@@ -252,6 +253,8 @@ public class Main {
 					
 					jKeyList.removeAll(); // remove all of the keys so they are not duplicated on reconnect
 				
+					Collections.sort(keysList); // sort the keyList so it is easier to look for keys.
+					
 					// Add the keys to the jlist
 					for (int i = 0; i < keysList.size(); i++) {
 						jKeyList.add(keysList.get(i));
@@ -365,6 +368,9 @@ public class Main {
 		});
 	}
 	
+	/**
+	 * Disable every jObject when the application goes into panick mode.
+	 */
 	private void disableAll() {
 		jKeyList.removeAll();
 		btnConnect.setEnabled(false);
