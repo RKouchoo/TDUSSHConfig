@@ -54,17 +54,8 @@ public class Main {
 
 	private static InputStream blobIn;
 	private static JSONObject json;
-	
-	private static enum dataType {
-		STRING,
-		BOOLEAN,
-		LONG,
-		DOUBLE,
-		JSONArray,
-		INVALID
-	}
 
-	private dataType jObjectType;
+	private Constants.dataType jObjectType;
 	
 	/**
 	 * Launch the application.
@@ -86,6 +77,7 @@ public class Main {
 			session.setConfig("StrictHostKeyChecking", "no");
 		} catch (JSchException e) {
 			statusReadoutTextBox.setText("[ERR]: Failed to initiate SSH library");
+			disableAll();
 			e.printStackTrace(); // send exception to the console, will be a strange error if this fails
 		}
 		handleButtons();
@@ -100,11 +92,13 @@ public class Main {
 		frmRobotconfigEditor.setTitle("RobotConfig Editor");
 		frmRobotconfigEditor.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmRobotconfigEditor.getContentPane().setLayout(null);
-
+		frmRobotconfigEditor.setResizable(false);
+		
 		statusReadoutTextBox = new JTextField();
 		dataEntryTextBox = new JTextField();
 
 		jKeyList = new List();
+		
 		btnUpdate = new JButton("Update locally");
 		btnPushToRobot = new JButton("Push to robot");
 		btnConnect = new JButton("Connect");
@@ -147,7 +141,6 @@ public class Main {
 		frmRobotconfigEditor.getContentPane().add(lblLocalStatus);
 		frmRobotconfigEditor.getContentPane().add(lblAuthor);
 		frmRobotconfigEditor.getContentPane().add(jKeyList);
-
 	}
 
 	/**
@@ -166,6 +159,7 @@ public class Main {
 				}
 				
 				switch (jObjectType) {
+
 				case BOOLEAN:
 					json.replace(jKeyList.getSelectedItem(), Boolean.valueOf(dataEntryTextBox.getText()));
 					break;
@@ -235,11 +229,13 @@ public class Main {
 					StringBuilder s = new StringBuilder();
 
 					String line;
-
+					
+					// Read in the inputStream to a big json string.
 					while ((line = br.readLine()) != null) {
 						s.append(line);
 					}
 
+					// cast/convert the string to a json object.
 					String JSONDump = s.toString();
 					JSONParser parser = new JSONParser();
 					json = (JSONObject) parser.parse(JSONDump);
@@ -275,20 +271,21 @@ public class Main {
 
 		btnDisconnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				boolean connection = false;
+				boolean wasConnection = false;
 				if (session.isConnected()) {
 					session.disconnect();
-					connection = true;
+					wasConnection = true;
 					statusReadoutTextBox.setText("[WARN]: Disconnected from robot.");
 					lblLocalStatus.setText("Connection Status: DISCONNECTED");
 				} else {
 					statusReadoutTextBox.setText("[WARN]: Not connected to robot, ignoring.");
+					wasConnection = false;
 				}
-				/*
-				 * Disable EVERYTHING if was last connected!!!! 
-				 */
 				
-				if (connection) {
+				/*
+				 * Disable EVERYTHING! if was last connected!!!! 
+				 */				
+				if (wasConnection) {
 					disableAll();
 				}		
 			}
@@ -346,22 +343,23 @@ public class Main {
 					statusReadoutTextBox.setText("[ERR]: No data in JSON file!");
 					return;
 				}
+				
 				statusReadoutTextBox.setText(String.format("Selected key: %s", jKeyList.getSelectedItem()));
 				dataEntryTextBox.setText(json.get(jKeyList.getSelectedItem()).toString());
 				Object testObjectType = json.get(jKeyList.getSelectedItem());
 				
 				if (testObjectType instanceof Boolean) {
-					jObjectType = dataType.BOOLEAN;
+					jObjectType = Constants.dataType.BOOLEAN;
 				} else if (testObjectType instanceof Long) {
-					jObjectType = dataType.LONG;
+					jObjectType = Constants.dataType.LONG;
 				} else if (testObjectType instanceof Double) {
-					jObjectType = dataType.DOUBLE;					
+					jObjectType = Constants.dataType.DOUBLE;					
 				} else if (testObjectType instanceof JSONArray) {
-					jObjectType = dataType.JSONArray;
+					jObjectType = Constants.dataType.JSONArray;
 				} else if (testObjectType instanceof String) {
-					jObjectType = dataType.STRING;
+					jObjectType = Constants.dataType.STRING;
 				} else {
-					jObjectType = dataType.INVALID;
+					jObjectType = Constants.dataType.INVALID;
 				}
 				return;
 			}
@@ -372,6 +370,7 @@ public class Main {
 	 * Disable every jObject when the application goes into panick mode.
 	 */
 	private void disableAll() {
+		String text = "Restart tool!";
 		jKeyList.removeAll();
 		btnConnect.setEnabled(false);
 		btnDisconnect.setEnabled(false);
@@ -380,13 +379,14 @@ public class Main {
 		jKeyList.setEnabled(false);
 		dataEntryTextBox.setEnabled(false);
 		babyMode.setEnabled(false);
-		lblLocalStatus.setText("Connecrion Status: RESTART TOOL");
-		btnUpdate.setText("Restart tool!");
-		btnPushToRobot.setText("Restart tool!");
-		btnDisconnect.setText("Restart tool!");
-		btnConnect.setText("Restart tool!");
-		jKeyList.add("Restart tool!");
-		dataEntryTextBox.setText("Restart tool!");	
-		babyMode.setText("Restart tool!");
+		
+		lblLocalStatus.setText("Connection Status: " + text);
+		btnUpdate.setText(text);
+		btnPushToRobot.setText(text);
+		btnDisconnect.setText(text);
+		btnConnect.setText(text);
+		jKeyList.add(text);
+		dataEntryTextBox.setText(text);	
+		babyMode.setText(text);
 	}
 }

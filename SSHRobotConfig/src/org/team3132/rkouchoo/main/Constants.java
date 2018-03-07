@@ -14,4 +14,12 @@ public class Constants {
 
 	public static final String SSH_REMOTE_FILE = "/home/lvuser/RobotConfig.txt";
 	
+	public static enum dataType {
+		STRING,
+		BOOLEAN,
+		LONG,
+		DOUBLE,
+		JSONArray,
+		INVALID
+	}
 }
