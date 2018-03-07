@@ -164,8 +164,8 @@ public class Main {
 					json.put(jKeyList.getSelectedItem(), Double.valueOf(dataEntryTextBox.getText()));
 					break;
 				case INVALID:
-					statusReadoutTextBox.setText("[ERR]: Invalid datatype!");
-					System.err.println("Invalid data type");
+					statusReadoutTextBox.setText("[ERR]: Invalid datatype! not placing!");
+					System.err.println("Invalid data type. not placing itno json");
 					break;
 				case JSONArray:
 					Object object = null;
