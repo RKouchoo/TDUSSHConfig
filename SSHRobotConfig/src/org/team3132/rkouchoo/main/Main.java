@@ -53,7 +53,6 @@ public class Main {
 
 	private static InputStream blobIn;
 	private static JSONObject json;
-
 	
 	private static enum dataType {
 		STRING,
@@ -161,7 +160,7 @@ public class Main {
 				
 				// Check if the json file actually contains data and keys are present.
 				if (json == null) {
-					statusReadoutTextBox.setText("[ERR]: Invalid JSON file! Connect to retrieve data!");
+					statusReadoutTextBox.setText("[ERR]: Invalid JSON file! Connect & modify file!");
 					return;
 				}
 				
@@ -210,7 +209,6 @@ public class Main {
 			@SuppressWarnings("unchecked")
 			public void actionPerformed(ActionEvent e) {
 				try {
-
 					statusReadoutTextBox.setText("[WARN]: Trying to connect to the robot.");
 
 					if (!session.isConnected()) {
@@ -325,7 +323,7 @@ public class Main {
 						} else {
 							sftpConnection.put(jsonStream, Constants.SSH_REMOTE_FILE); 		
 						}																		
-						statusReadoutTextBox.setText("[WARN]: Sent file to robot. SUCCESS!!!!.");
+						statusReadoutTextBox.setText("[WARN]: Sent file to robot. SUCCESS!.");
 					} catch (Exception ex) {
 						statusReadoutTextBox.setText("[ERR]: Failed to create SFTP connection!.");
 						ex.printStackTrace(); // send to console
@@ -334,7 +332,6 @@ public class Main {
 					statusReadoutTextBox.setText("[ERR]: Disconnected from robot, CANNOT PUSH.");
 					return;
 				}
-
 			}
 		});
 
@@ -369,20 +366,21 @@ public class Main {
 	}
 	
 	private void disableAll() {
+		jKeyList.removeAll();
 		btnConnect.setEnabled(false);
 		btnDisconnect.setEnabled(false);
 		btnPushToRobot.setEnabled(false);
 		btnUpdate.setEnabled(false);
+		jKeyList.setEnabled(false);
+		dataEntryTextBox.setEnabled(false);
+		babyMode.setEnabled(false);
+		lblLocalStatus.setText("Connecrion Status: RESTART TOOL");
 		btnUpdate.setText("Restart tool!");
 		btnPushToRobot.setText("Restart tool!");
 		btnDisconnect.setText("Restart tool!");
 		btnConnect.setText("Restart tool!");
-		jKeyList.removeAll();
-		jKeyList.setEnabled(false);
 		jKeyList.add("Restart tool!");
-		dataEntryTextBox.setEnabled(false);
 		dataEntryTextBox.setText("Restart tool!");	
-		babyMode.setEnabled(false);
 		babyMode.setText("Restart tool!");
 	}
 }
