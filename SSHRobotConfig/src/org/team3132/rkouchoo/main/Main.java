@@ -168,8 +168,8 @@ public class Main {
 					break;
 				case INVALID:
 					statusReadoutTextBox.setText("[ERR]: Invalid datatype! not placing!");
-					System.err.println("Invalid data type. not placing itno json");
-					keyNotPut = true; // make sure the put key log is not printed out, instead this key should be placed.
+					System.err.println("Invalid data type. not placing into json");
+					keyNotPut = true; // make sure the put key log is not printed out, instead this key should be thrown away.
 					break;
 				case JSONArray:
 					Object object = null;
