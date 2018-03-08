@@ -218,7 +218,7 @@ public class Main {
 
 					// Grab the remote file.
 					blobIn = sftpConnection.get(Constants.SSH_REMOTE_FILE);
-					sftpConnection.put(blobIn, Constants.SSH_REMOTE_FILE + ".save"); // make a backup of the current file on connection.
+					// BROKEN! sftpConnection.put(blobIn, Constants.SSH_REMOTE_FILE + ".save"); // make a backup of the current file on connection.
 					statusReadoutTextBox.setText(String.format("[WARN]: Got file: %s", Constants.SSH_REMOTE_FILE));
 
 					/**
